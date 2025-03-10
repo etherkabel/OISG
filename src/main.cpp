@@ -1,18 +1,17 @@
-#include <SDL3/SDL_error.h>
-#include <SDL3/SDL_init.h>
-#include <SDL3/SDL_log.h>
-#include <SDL3/SDL_render.h>
-#include <SDL3/SDL_video.h>
-#include <cstddef>
+#include "SDL3/SDL_events.h"
+#include "SDL3/SDL_log.h"
+#include <cstdio>
 #define SDL_MAIN_USE_CALLBACKS 1 /* use the callbacks instead of main() */
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 
 static SDL_Window *window = NULL;
 static SDL_Renderer *renderer = NULL;
+static SDL_FPoint points[500];
 
 /* This function runs once at startup. */
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) {
+    int i;
     SDL_SetAppMetadata("OISG", "0.1", "com.github.etherkabel.OISG");
 
     if (!SDL_Init(SDL_INIT_VIDEO)) {
@@ -20,10 +19,16 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) {
         return SDL_APP_FAILURE;
     }
 
-    if (!SDL_CreateWindowAndRenderer("OISG", 640, 480, 0, &window, &renderer)) {
+    if (!SDL_CreateWindowAndRenderer("OISG", 640, 480, SDL_WINDOW_RESIZABLE, &window, &renderer)) {
             SDL_Log("Couldn't create window/renderer: %s", SDL_GetError());
             return SDL_APP_FAILURE;
         }
+
+    /* set up some random points */
+    for (i = 0; i < SDL_arraysize(points); i++) {
+        points[i].x = (SDL_randf() * 440.0f) + 100.0f;
+        points[i].y = (SDL_randf() * 280.0f) + 100.0f;
+    }
 
     return SDL_APP_CONTINUE;
 }
@@ -34,24 +39,59 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
         return SDL_APP_SUCCESS;
     }
 
+    if (event->type == SDL_EVENT_WINDOW_RESIZED) {
+        if (event->window.data2 < 380) {
+            SDL_Log("Resize: x%d\n", event->window.data2);
+            if (!SDL_SetWindowSize(window, event->window.data1, 380)) {
+                SDL_Log("ERRRORR: Resize\n");
+            }
+        }
+    }
+
+    if (event->type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+        SDL_Log("Pressed!\n");
+        if (!SDL_SetWindowSize(window, 500, 500)) {
+            SDL_Log("ERRRORR: Resize\n");
+        }
+    }
+
     return SDL_APP_CONTINUE;
 }
 
 SDL_AppResult SDL_AppIterate(void *appstate) {
-    const double now = ((double)SDL_GetTicks()) / 1000.0;  /* convert from milliseconds to seconds. */
-        /* choose the color for the frame we will draw. The sine wave trick makes it fade between colors smoothly. */
-        const float red = (float) (0.5 + 0.5 * SDL_sin(now));
-        const float green = (float) (0.5 + 0.5 * SDL_sin(now + SDL_PI_D * 2 / 3));
-        const float blue = (float) (0.5 + 0.5 * SDL_sin(now + SDL_PI_D * 4 / 3));
-        SDL_SetRenderDrawColorFloat(renderer, red, green, blue, SDL_ALPHA_OPAQUE_FLOAT);  /* new color, full alpha. */
+    SDL_FRect rect;
 
-        /* clear the window to the draw color. */
-        SDL_RenderClear(renderer);
+    /* as you can see from this, rendering draws over whatever was drawn before it. */
+    SDL_SetRenderDrawColor(renderer, 255, 33, 33, SDL_ALPHA_OPAQUE);  /* dark gray, full alpha */
+    SDL_RenderClear(renderer);  /* start with a blank canvas. */
 
-        /* put the newly-cleared rendering on the screen. */
-        SDL_RenderPresent(renderer);
+    /* draw a filled rectangle in the middle of the canvas. */
+    SDL_SetRenderDrawColor(renderer, 0, 0, 255, SDL_ALPHA_OPAQUE);  /* blue, full alpha */
+    rect.x = rect.y = 100;
+    rect.w = 440;
+    rect.h = 280;
+    SDL_RenderFillRect(renderer, &rect);
 
-        return SDL_APP_CONTINUE;  /* carry on with the program! */
+    /* draw some points across the canvas. */
+    SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);  /* red, full alpha */
+    SDL_RenderPoints(renderer, points, SDL_arraysize(points));
+
+    /* draw a unfilled rectangle in-set a little bit. */
+    SDL_SetRenderDrawColor(renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);  /* green, full alpha */
+    rect.x += 30;
+    rect.y += 30;
+    rect.w -= 60;
+    rect.h -= 60;
+    SDL_RenderRect(renderer, &rect);
+
+    /* draw two lines in an X across the whole canvas. */
+    SDL_SetRenderDrawColor(renderer, 255, 255, 0, SDL_ALPHA_OPAQUE);  /* yellow, full alpha */
+    SDL_RenderLine(renderer, 0, 0, 640, 480);
+    SDL_RenderLine(renderer, 0, 480, 640, 0);
+
+    SDL_RenderPresent(renderer);  /* put it all on the screen! */
+
+    return SDL_APP_CONTINUE;  /* carry on with the program! */
 }
 
 /* This function runs once at shutdown. */
