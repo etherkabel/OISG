@@ -38,6 +38,3 @@ cmake-build-*/
 
 # Libs
 # lib/sdl/*
-
-# vscode clangd
-.cache
