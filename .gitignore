@@ -35,8 +35,4 @@
 build/
 cmake-build-*/
 
-
-# Libs
-lib/
-
 .cache/
