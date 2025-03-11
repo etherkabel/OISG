@@ -14,11 +14,14 @@ int main() {
     SDL_Init(SDL_INIT_VIDEO);
     SDL_Window *win = SDL_CreateWindow("Test", 640, 480, SDL_WINDOW_RESIZABLE);
     if (!win) {
-        log.stream(Logger::FATAL) << "Window CREATION!!!!!! failed" << SDL_GetError() << endl;
+        log.stream(Logger::FATAL) << "Window CREATION!!!!!! failed: " << SDL_GetError() << endl;
+        return 1;
     }
     SDL_Renderer *ren = SDL_CreateRenderer(win, NULL);
+    log.stream(Logger::INFO) << "Using renderer: " << SDL_GetRendererName(ren) << endl;
     if (!ren) {
-        log.stream(Logger::FATAL) << "Renderer CREATION!!!!!! failed" << SDL_GetError() << endl;
+        log.stream(Logger::FATAL) << "Renderer CREATION!!!!!! failed: " << SDL_GetError() << endl;
+        return 1;
     }
     log.debug("Initialization complete");
 

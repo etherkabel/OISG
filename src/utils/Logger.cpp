@@ -36,6 +36,6 @@ void Logger::fatal(string message) {
 }
 
 basic_ostream<char>& Logger::stream(Level level) {
-    cout << "[" << name << "] " << LEVEL_TO_STRING(level) << ": ";
+    cout << "[" << name << "] " << LEVEL_TO_COLOR(level) << LEVEL_TO_STRING(level) << RESET_COLOR << ": ";
     return cout;
 }
