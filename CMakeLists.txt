@@ -9,7 +9,8 @@ include(FetchContent)
 FetchContent_Declare(
     SDL
     GIT_REPOSITORY https://github.com/libsdl-org/SDL
-    GIT_TAG main
+    GIT_TAG release-3.2.x
+    SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}/external/SDL"
 )
 FetchContent_MakeAvailable(SDL)
 
