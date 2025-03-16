@@ -31,17 +31,17 @@ int main() {
     }
     TTF_Init();
     int start = SDL_GetTicks();
-    // SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0");
-    SDL_Window *win = SDL_CreateWindow("Test", 640, 480, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN | SDL_WINDOW_OPENGL);
+    SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0");
+    SDL_Window *win = SDL_CreateWindow("Test", 640, 480, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN | SDL_WINDOW_VULKAN);
     if (!win) {
-        log.stream(Logger::FATAL) << "Window CREATION!!!!!! failed: " << SDL_GetError() << endl;
+        log.stream(Logger::FATAL) << "Window creation failed: " << SDL_GetError() << endl;
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "SDL Error", SDL_GetError(), NULL);
         return 1;
     }
-    SDL_Renderer *ren = SDL_CreateRenderer(win, NULL);
+    SDL_Renderer *ren = SDL_CreateRenderer(win, "vulkan");
     log.stream(Logger::INFO) << "Using video: " << SDL_GetCurrentVideoDriver() << endl;
     if (!ren) {
-        log.stream(Logger::FATAL) << "Renderer CREATION!!!!!! failed: " << SDL_GetError() << endl;
+        log.stream(Logger::FATAL) << "Renderer creation failed: " << SDL_GetError() << endl;
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "SDL Error", SDL_GetError(), NULL);
         return 1;
     }
@@ -53,64 +53,23 @@ int main() {
     log.debug("Initialization complete");
     log.stream(Logger::INFO) << "SDL initialization took " << SDL_GetTicks() - start << "ms" << endl;
 
-    TTF_TextEngine *ttfEngine = TTF_CreateRendererTextEngine(ren);
-    TTF_Font *font = TTF_OpenFont("assets/fonts/JetBrainsMonoNL-Regular.ttf", 24);
-    if (!ttfEngine or !font) {
-        log.stream(Logger::FATAL) << "Couldnt create TTF " << SDL_GetError();
-        return 1;
-    }
-
-    Label fpsLabel = Label(ttfEngine, font);
-
-    SDL_Surface *bmp = IMG_Load("assets/bottle.png");
-    if (!bmp) {
-        log.stream(Logger::FATAL) << "Image load failed: " << SDL_GetError() << endl;
-        return 1;
-    }
-    SDL_Texture *tex = SDL_CreateTextureFromSurface(ren, bmp);
-    SDL_SetTextureScaleMode(tex, SDL_SCALEMODE_NEAREST);
-    SDL_DestroySurface(bmp);
-    SDL_FRect rect{};
-    SDL_GetTextureSize(tex, &rect.w, &rect.h);
-    rect.h *= 8;
-    rect.w *= 8;
-    const bool *keys = SDL_GetKeyboardState(NULL);
-
-    int frame = 0;
-    auto testEvent = [&](const SDL_Event &event) {
-        rect.x = event.motion.x;
-        rect.y = event.motion.y;
-    };
     Button b({320, 240, 64, 64});
     Clock clk(120);
     EventBus &bus = EventBus::instance();
     SDL_Event e;
     bool running = true;
     while (running) {
-        frame++;
         while (SDL_PollEvent(&e)) {
             bus.emit(e);
             switch (e.type) {
                 case SDL_EVENT_QUIT: running = false; break;
             }
         }
-        if (keys[SDL_SCANCODE_UP]) {
-            rect.y -= 4;
-        } else if (keys[SDL_SCANCODE_DOWN]) {
-            rect.y += 4;
-        }
-        if (keys[SDL_SCANCODE_LEFT]) {
-            rect.x -= 4;
-        } else if (keys[SDL_SCANCODE_RIGHT]) {
-            rect.x += 4;
-        }
         SDL_SetRenderDrawColor(ren, 0, 64, 128, 255);
         SDL_RenderClear(ren);
-        SDL_RenderTexture(ren, tex, NULL, &rect);
         b.render(ren);
-        fpsLabel.format("FPS: %f", clk.getFPS());
-        fpsLabel.render(8, 8);
         SDL_RenderPresent(ren);
+        clk.update();
     }
 
     SDL_DestroyWindow(win);
