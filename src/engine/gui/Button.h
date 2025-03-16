@@ -4,20 +4,26 @@
 #include "SDL3/SDL_events.h"
 #include "SDL3/SDL_rect.h"
 #include <iostream>
-#include "../EventBus.h"
+#include "engine/EventBus.h"
 #include "SDL3/SDL_render.h"
+
+#define ENGINE_EVENT_BUTTON_CLICKED 100
 
 class Button {
 public:
     Button(const SDL_FRect& rect) : rect(rect) {
         EventBus::instance().subscribe(SDL_EVENT_MOUSE_BUTTON_DOWN, &Button::clickEvent, this);
         EventBus::instance().subscribe(SDL_EVENT_MOUSE_MOTION, &Button::mouseMoveEvent, this);
+        
     }
 
     void clickEvent(const SDL_Event& event) {
         SDL_FPoint mousePos = {event.button.x, event.button.y};
         if (SDL_PointInRectFloat(&mousePos, &rect)) {
             std::cout << "Button clicked!" << std::endl;
+            SDL_Event ev = {ENGINE_EVENT_BUTTON_CLICKED};
+            ev.user.data1 = this;
+            EventBus::instance().emit(ev);
         }
     }
 

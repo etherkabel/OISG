@@ -1,24 +1,18 @@
 #include <SDL3/SDL.h>
 #include "SDL3/SDL_error.h"
 #include "SDL3/SDL_events.h"
-#include "SDL3/SDL_keyboard.h"
 #include "SDL3/SDL_messagebox.h"
-#include "SDL3/SDL_rect.h"
 #include "SDL3/SDL_render.h"
 #include <cstddef>
 #include <iostream>
 #include <cstdio>
-#include "SDL3/SDL_scancode.h"
-#include "SDL3/SDL_surface.h"
 #include "SDL3/SDL_timer.h"
 #include "utils/Clock.h"
-#include "SDL3_image/SDL_image.h"
 #include <SDL3/SDL_video.h>
 #include <SDL3/SDL_init.h>
 #include <string>
 #include "SDL3_ttf/SDL_ttf.h"
 #include "utils/Logger.h"
-#include "engine/gui/Label.h"
 #include "engine/gui/Button.h"
 #include "engine/EventBus.h"
 
@@ -26,19 +20,21 @@ using namespace std;
 
 int main() {
     Logger log("main", Logger::DEBUG);
-    if (!SDL_Init(SDL_INIT_VIDEO)) {
+    if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS)) {
         log.stream(Logger::FATAL) << "SDL Initialization failed: " << SDL_GetError() << endl;
     }
+
     TTF_Init();
     int start = SDL_GetTicks();
     SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0");
-    SDL_Window *win = SDL_CreateWindow("Test", 640, 480, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN | SDL_WINDOW_VULKAN);
+    SDL_Window *win = SDL_CreateWindow("Test", 640, 480, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN);
     if (!win) {
         log.stream(Logger::FATAL) << "Window creation failed: " << SDL_GetError() << endl;
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "SDL Error", SDL_GetError(), NULL);
         return 1;
     }
     SDL_Renderer *ren = SDL_CreateRenderer(win, "vulkan");
+
     log.stream(Logger::INFO) << "Using video: " << SDL_GetCurrentVideoDriver() << endl;
     if (!ren) {
         log.stream(Logger::FATAL) << "Renderer creation failed: " << SDL_GetError() << endl;
@@ -53,9 +49,14 @@ int main() {
     log.debug("Initialization complete");
     log.stream(Logger::INFO) << "SDL initialization took " << SDL_GetTicks() - start << "ms" << endl;
 
+    auto buttonCallback = [&](const SDL_Event &e) {
+        log.info("Button clicked");
+    };
+
     Button b({320, 240, 64, 64});
     Clock clk(120);
     EventBus &bus = EventBus::instance();
+    EventBus::instance().subscribe(ENGINE_EVENT_BUTTON_CLICKED, buttonCallback);
     SDL_Event e;
     bool running = true;
     while (running) {
