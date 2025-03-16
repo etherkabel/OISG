@@ -6,6 +6,7 @@
 #include "SDL3/SDL_rect.h"
 #include "SDL3/SDL_render.h"
 #include <cstddef>
+#include <iostream>
 #include <cstdio>
 #include "SDL3/SDL_scancode.h"
 #include "SDL3/SDL_surface.h"
@@ -18,6 +19,10 @@
 #include "SDL3_ttf/SDL_ttf.h"
 #include "utils/Logger.h"
 #include "engine/gui/Label.h"
+#include "engine/gui/Button.h"
+#include "engine/EventBus.h"
+
+using namespace std;
 
 int main() {
     Logger log("main", Logger::DEBUG);
@@ -26,7 +31,7 @@ int main() {
     }
     TTF_Init();
     int start = SDL_GetTicks();
-    SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0");
+    // SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0");
     SDL_Window *win = SDL_CreateWindow("Test", 640, 480, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN | SDL_WINDOW_OPENGL);
     if (!win) {
         log.stream(Logger::FATAL) << "Window CREATION!!!!!! failed: " << SDL_GetError() << endl;
@@ -34,6 +39,7 @@ int main() {
         return 1;
     }
     SDL_Renderer *ren = SDL_CreateRenderer(win, NULL);
+    log.stream(Logger::INFO) << "Using video: " << SDL_GetCurrentVideoDriver() << endl;
     if (!ren) {
         log.stream(Logger::FATAL) << "Renderer CREATION!!!!!! failed: " << SDL_GetError() << endl;
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "SDL Error", SDL_GetError(), NULL);
@@ -70,11 +76,20 @@ int main() {
     rect.w *= 8;
     const bool *keys = SDL_GetKeyboardState(NULL);
 
+    int frame = 0;
+    auto testEvent = [&](const SDL_Event &event) {
+        rect.x = event.motion.x;
+        rect.y = event.motion.y;
+    };
+    Button b({320, 240, 64, 64});
     Clock clk(120);
+    EventBus &bus = EventBus::instance();
     SDL_Event e;
     bool running = true;
     while (running) {
+        frame++;
         while (SDL_PollEvent(&e)) {
+            bus.emit(e);
             switch (e.type) {
                 case SDL_EVENT_QUIT: running = false; break;
             }
@@ -89,13 +104,13 @@ int main() {
         } else if (keys[SDL_SCANCODE_RIGHT]) {
             rect.x += 4;
         }
-        SDL_SetRenderDrawColor(ren, 0, 100, 0, 255);
+        SDL_SetRenderDrawColor(ren, 0, 64, 128, 255);
         SDL_RenderClear(ren);
         SDL_RenderTexture(ren, tex, NULL, &rect);
+        b.render(ren);
         fpsLabel.format("FPS: %f", clk.getFPS());
         fpsLabel.render(8, 8);
         SDL_RenderPresent(ren);
-        clk.update();
     }
 
     SDL_DestroyWindow(win);

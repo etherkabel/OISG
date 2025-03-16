@@ -1,3 +1,6 @@
+#ifndef LABEL_H
+#define LABEL_H
+
 #include "SDL3_ttf/SDL_ttf.h"
 #include <cstdio>
 #include <string>
@@ -44,3 +47,5 @@ private:
     TTF_Font* m_font;
     TTF_Text* m_text;
 };
+
+#endif
