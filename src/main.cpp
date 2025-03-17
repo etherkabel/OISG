@@ -49,14 +49,10 @@ int main() {
     log.debug("Initialization complete");
     log.stream(Logger::INFO) << "SDL initialization took " << SDL_GetTicks() - start << "ms" << endl;
 
-    auto buttonCallback = [&](const SDL_Event &e) {
-        log.info("Button clicked");
-    };
-
     Button b({320, 240, 64, 64});
+    Button b2({240, 320, 64, 64});
     Clock clk(120);
     EventBus &bus = EventBus::instance();
-    EventBus::instance().subscribe(ENGINE_EVENT_BUTTON_CLICKED, buttonCallback);
     SDL_Event e;
     bool running = true;
     while (running) {
@@ -69,6 +65,7 @@ int main() {
         SDL_SetRenderDrawColor(ren, 0, 64, 128, 255);
         SDL_RenderClear(ren);
         b.render(ren);
+        b2.render(ren);
         SDL_RenderPresent(ren);
         clk.update();
     }

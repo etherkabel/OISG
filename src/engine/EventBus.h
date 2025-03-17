@@ -7,6 +7,11 @@
 #include <map>
 
 
+using BusEventType = Uint32;
+using BusCallback = std::function<void(const SDL_Event &)>;
+using CallbackID = int;
+
+
 class EventBus
 {
 public:
@@ -14,23 +19,37 @@ public:
     ~EventBus() = default;
 
     void emit(const SDL_Event &event) {
-        auto range = callbacks.equal_range(event.type);
-        if (range.first == range.second) {
-            return;
-        }
-        for (auto it = range.first; it != range.second; ++it) {
-            it->second(event);
+        if (callbacks.find(event.type) != callbacks.end()) {
+            for (auto &callback : callbacks[event.type]) {
+                callback.second(event);
+            }
         }
     }
-    void subscribe(Uint32 type, std::function<void(const SDL_Event &)> callback) {
-        callbacks.insert(std::make_pair(type, callback));
+
+    CallbackID subscribe(Uint32 type, std::function<void(const SDL_Event &)> callback) {
+        CallbackID id = nextID++;
+        callbacks[type][id] = callback;
+        return id;
     }
 
     template <typename T>
-    void subscribe(Uint32 type, void (T::*method)(const SDL_Event &), T *instance) {
-        callbacks.insert(std::make_pair(type, [method, instance](const SDL_Event &event) {
+    int subscribe(Uint32 type, void (T::*method)(const SDL_Event &), T *instance) {
+        CallbackID id = nextID++;
+        auto wrappedCallback = [method, instance](const SDL_Event &event) {
             (instance->*method)(event);
-        }));
+        };
+        callbacks[type][id] = wrappedCallback;
+        return id;
+    }
+
+    bool unsubscribe(CallbackID id) {
+        for (auto &pair : callbacks) {
+            if (pair.second.find(id) != pair.second.end()) {
+                pair.second.erase(id);
+                return true;
+            }
+        }
+        return false;
     }
     
     static EventBus &instance() {
@@ -42,7 +61,8 @@ public:
     EventBus &operator=(const EventBus &) = delete;
 
 private:
-    std::multimap<Uint32, std::function<void(const SDL_Event &)>> callbacks{};
+    CallbackID nextID;
+    std::map<BusEventType, std::map<CallbackID, BusCallback>> callbacks;
 };
 
 #endif
