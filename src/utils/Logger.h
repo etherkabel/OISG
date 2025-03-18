@@ -43,10 +43,8 @@ public:
 
     basic_ostream<char>& stream(Level level);
 
-    void setLevel(Level level) { this->level = level; }
-    Level getLevel() { return level; }
-
+    Level level;
+    
 private:
     string name;
-    Level level;
 };
