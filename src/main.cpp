@@ -14,7 +14,7 @@
 #include "SDL3_ttf/SDL_ttf.h"
 #include "utils/Logger.h"
 #include "engine/gui/Button.h"
-#include "engine/EventBus.h"
+#include "engine/events//EventBus.h"
 
 using namespace std;
 
@@ -49,8 +49,10 @@ int main() {
     log.debug("Initialization complete");
     log.stream(Logger::INFO) << "SDL initialization took " << SDL_GetTicks() - start << "ms" << endl;
 
-    Button b({320, 240, 64, 64});
-    Button b2({240, 320, 64, 64});
+    Button b({256, 224, 128, 32});
+    b.onClick.connect([&log](const Button& b) {
+        log.info("Button clicked");
+    });
     Clock clk(120);
     EventBus &bus = EventBus::instance();
     SDL_Event e;
@@ -65,7 +67,6 @@ int main() {
         SDL_SetRenderDrawColor(ren, 0, 64, 128, 255);
         SDL_RenderClear(ren);
         b.render(ren);
-        b2.render(ren);
         SDL_RenderPresent(ren);
         clk.update();
     }

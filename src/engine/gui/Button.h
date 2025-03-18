@@ -3,8 +3,9 @@
 
 #include "SDL3/SDL_events.h"
 #include "SDL3/SDL_rect.h"
-#include "engine/EventBus.h"
+#include "engine/events/EventBus.h"
 #include "SDL3/SDL_render.h"
+#include "engine/events/Signal.h"
 
 class Button {
 public:
@@ -13,7 +14,7 @@ public:
     void clickEvent(const SDL_Event& event) {
         SDL_FPoint mousePos = {event.button.x, event.button.y};
         if (SDL_PointInRectFloat(&mousePos, &rect)) {
-            // TODO: emit signal
+            onClick.emit(*this);
         }
     }
 
@@ -32,6 +33,8 @@ public:
         SDL_SetRenderDrawColor(renderer, 192, 192, 192, 255);
         SDL_RenderRect(renderer, &rect);
     }
+
+    Signal<const Button&> onClick;
 
 private:
     CallbackID clickID = EventBus::instance().subscribe(SDL_EVENT_MOUSE_BUTTON_DOWN, &Button::clickEvent, this);
