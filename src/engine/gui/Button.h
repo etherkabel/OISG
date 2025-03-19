@@ -37,8 +37,8 @@ public:
     Signal<const Button&> onClick;
 
 private:
-    CallbackID clickID = EventBus::instance().subscribe(SDL_EVENT_MOUSE_BUTTON_DOWN, &Button::clickEvent, this);
-    CallbackID mouseMoveID = EventBus::instance().subscribe(SDL_EVENT_MOUSE_MOTION, &Button::mouseMoveEvent, this);
+    CallbackID clickID = GlobalEventBus.subscribe(SDL_EVENT_MOUSE_BUTTON_DOWN, &Button::clickEvent, this);
+    CallbackID mouseMoveID = GlobalEventBus.subscribe(SDL_EVENT_MOUSE_MOTION, &Button::mouseMoveEvent, this);
 
     SDL_FRect rect;
     bool mouseOver = false;

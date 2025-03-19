@@ -54,12 +54,11 @@ int main() {
         log.info("Button clicked");
     });
     Clock clk(120);
-    EventBus &bus = EventBus::instance();
     SDL_Event e;
     bool running = true;
     while (running) {
         while (SDL_PollEvent(&e)) {
-            bus.emit(e);
+            GlobalEventBus.emit(e);
             switch (e.type) {
                 case SDL_EVENT_QUIT: running = false; break;
             }

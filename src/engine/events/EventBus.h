@@ -51,18 +51,12 @@ public:
         }
         return false;
     }
-    
-    static EventBus &instance() {
-        static EventBus instance;
-        return instance;
-    }
-
-    EventBus(const EventBus &) = delete;
-    EventBus &operator=(const EventBus &) = delete;
 
 private:
-    CallbackID nextID;
-    std::map<BusEventType, std::map<CallbackID, BusCallback>> callbacks;
+    CallbackID nextID = 0;
+    std::map<BusEventType, std::map<CallbackID, BusCallback>> callbacks = {};
 };
+
+inline EventBus GlobalEventBus = EventBus();
 
 #endif
