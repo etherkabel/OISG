@@ -57,6 +57,4 @@ private:
     std::map<BusEventType, std::map<CallbackID, BusCallback>> callbacks = {};
 };
 
-inline EventBus GlobalEventBus = EventBus();
-
 #endif

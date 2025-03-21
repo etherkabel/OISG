@@ -9,16 +9,16 @@ public:
     }
 
     void update() {
-    Uint64 current = SDL_GetTicksNS();
-    Uint64 elapsed = current - m_lastFrame;
+        Uint64 current = SDL_GetTicksNS();
+        Uint64 elapsed = current - m_lastFrame;
 
-    if (elapsed < m_frameTime) {
-        SDL_DelayNS(m_frameTime - elapsed);
+        if (elapsed < m_frameTime) {
+            SDL_DelayNS(m_frameTime - elapsed);
+        }
+
+        m_lastFrame = SDL_GetTicksNS();
+        m_lastFrameTime = m_lastFrame - current;
     }
-
-    m_lastFrame = SDL_GetTicksNS();
-    m_lastFrameTime = m_lastFrame - current;
-}
 
 
     Uint64 getFrameTime() const { return m_lastFrameTime; }

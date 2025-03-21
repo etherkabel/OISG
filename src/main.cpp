@@ -4,17 +4,18 @@
 #include "SDL3/SDL_messagebox.h"
 #include "SDL3/SDL_render.h"
 #include <cstddef>
+#include <cstdlib>
 #include <iostream>
 #include <cstdio>
 #include "SDL3/SDL_timer.h"
+#include "engine/drawing/Circle.h"
 #include "utils/Clock.h"
 #include <SDL3/SDL_video.h>
 #include <SDL3/SDL_init.h>
 #include <string>
 #include "SDL3_ttf/SDL_ttf.h"
 #include "utils/Logger.h"
-#include "engine/gui/Button.h"
-#include "engine/events//EventBus.h"
+#include "engine/globals.h"
 
 using namespace std;
 
@@ -27,33 +28,32 @@ int main() {
     TTF_Init();
     int start = SDL_GetTicks();
     SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0");
-    SDL_Window *win = SDL_CreateWindow("Test", 640, 480, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN);
-    if (!win) {
+    window = SDL_CreateWindow("Test", 640, 480, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN);
+    if (!window) {
         log.stream(Logger::FATAL) << "Window creation failed: " << SDL_GetError() << endl;
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "SDL Error", SDL_GetError(), NULL);
         return 1;
     }
-    SDL_Renderer *ren = SDL_CreateRenderer(win, "vulkan");
+    renderer = SDL_CreateRenderer(window, "vulkan");
 
     log.stream(Logger::INFO) << "Using video: " << SDL_GetCurrentVideoDriver() << endl;
-    if (!ren) {
+    if (!renderer) {
         log.stream(Logger::FATAL) << "Renderer creation failed: " << SDL_GetError() << endl;
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "SDL Error", SDL_GetError(), NULL);
         return 1;
     }
-    log.stream(Logger::INFO) << "Using renderer: " << SDL_GetRendererName(ren) << endl;
-    if (!SDL_SetRenderVSync(ren, true)) {
+    log.stream(Logger::INFO) << "Using renderer: " << SDL_GetRendererName(renderer) << endl;
+    if (!SDL_SetRenderVSync(renderer, true)) {
         log.stream(Logger::WARN) << "VSync not supported: " << SDL_GetError() << endl;
     }
-    SDL_ShowWindow(win);
+    textEngine = TTF_CreateRendererTextEngine(renderer);
+    TTF_Font *font = TTF_OpenFont("assets/fonts/JetBrainsMonoNL-Regular.ttf", 16);
+    SDL_ShowWindow(window);
     log.debug("Initialization complete");
     log.stream(Logger::INFO) << "SDL initialization took " << SDL_GetTicks() - start << "ms" << endl;
 
-    Button b({256, 224, 128, 32});
-    b.onClick.connect([&log](const Button& b) {
-        log.info("Button clicked");
-    });
     Clock clk(120);
+
     SDL_Event e;
     bool running = true;
     while (running) {
@@ -63,15 +63,14 @@ int main() {
                 case SDL_EVENT_QUIT: running = false; break;
             }
         }
-        SDL_SetRenderDrawColor(ren, 0, 64, 128, 255);
-        SDL_RenderClear(ren);
-        b.render(ren);
-        SDL_RenderPresent(ren);
+        SDL_SetRenderDrawColor(renderer, 0, 64, 128, 255);
+        SDL_RenderClear(renderer);
+        SDL_RenderPresent(renderer);
         clk.update();
     }
 
-    SDL_DestroyWindow(win);
-    SDL_DestroyRenderer(ren);
+    SDL_DestroyWindow(window);
+    SDL_DestroyRenderer(renderer);
     SDL_Quit();
 
     log.debug("Shutting down");
